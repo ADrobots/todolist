@@ -2,7 +2,10 @@ package com.todolist.gui.frames;
 
 
 
+import com.todolist.da.HibernateService;
+import com.todolist.dao.SessionDao;
 import com.todolist.gui.core.TodoList;
+import com.todolist.task.Task;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -10,12 +13,15 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import static javax.swing.BorderFactory.createEmptyBorder;
 import static javax.swing.Box.createVerticalStrut;
 
 public class MainWindow extends JFrame{
 	private static final long serialVersionUID = 1L;
+
+	private SessionDao sessionDao = new SessionDao(HibernateService.getSessionFactory());
 	
 	private JPanel mainContentPane;
 	private JPanel newTaskControls;
@@ -119,40 +125,47 @@ public class MainWindow extends JFrame{
 		if (deleteButton == null) {
 			deleteButton = new JButton("Delete");
 			deleteButton.setIcon(createIcon("bin.png"));
-			
+
 			deleteButton.addMouseListener(new MouseAdapter(){
 				@Override
 				public void mouseClicked(MouseEvent e) {
+					int removeIndex = getTaskList().getSelectedIndex();
+					String task = todoListModel.getElementAt(removeIndex);
 					todoListModel.removeAt(getTaskList().getSelectedIndex());
+					sessionDao.delete(task);
 				}
 			});
 		}
-		
+
 		return deleteButton;
 	}
 
-	private JButton getAddTaskButton() {
-		if (addTaskButton == null) {
-			addTaskButton = new JButton("Add");
-			addTaskButton.setIcon(createIcon("diary.png"));
-			
-			addTaskButton.addMouseListener(new MouseAdapter(){
-				@Override
-				public void mouseClicked(MouseEvent e) {
-					if (getNewTaskField().getText().length() > 0) {
-						todoListModel.add(getNewTaskField().getText().trim());
-						
-						getNewTaskField().setText("");
-						
-						getTaskList().setSelectedIndex(getTaskList().getModel().getSize()-1);
-					}
-				}
-			});
-		}
-		
-		return addTaskButton;
-	}
-	
+
+    private JButton getAddTaskButton() {
+        if (addTaskButton == null) {
+            addTaskButton = new JButton("Add");
+            addTaskButton.setIcon(createIcon("diary.png"));
+
+            addTaskButton.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (getNewTaskField().getText().length() > 0) {
+                        String task = getNewTaskField().getText().trim();
+
+                        todoListModel.add(getNewTaskField().getText().trim());
+                        sessionDao.save(task);
+
+                        getNewTaskField().setText("");
+
+                        getTaskList().setSelectedIndex(getTaskList().getModel().getSize()-1);
+                    }
+                }
+            });
+        }
+
+        return addTaskButton;
+    }
+
 	private JLabel getStatusBar() {
 		if (statusBar == null) {
 			statusBar = new JLabel("Number of tasks: 0");
@@ -180,5 +193,12 @@ public class MainWindow extends JFrame{
 		return new ImageIcon(
 				getClass().
 				getResource("/"+iconfilename));
+	}
+
+	public void initialize(){
+		List<Task> tasks=sessionDao.getall();
+		for (Task task: tasks){
+			todoListModel.add(task.getTask());
+		}
 	}
 }

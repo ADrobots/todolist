@@ -10,6 +10,7 @@ public class TodoList implements Iterable<String>{
 
 	public void add(String item) {
 		list.add(item);
+
 	}
 
 	public void removeAt(int i) {

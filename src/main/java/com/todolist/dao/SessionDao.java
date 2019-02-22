@@ -11,8 +11,11 @@ import java.util.List;
 
 public class SessionDao{
 
-    static SessionFactory sessionFactory= HibernateService.getSessionFactory();
+    private SessionFactory sessionFactory;
 
+    public SessionDao(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
 
     public List<Task> getall(){
         Session session=sessionFactory.openSession();
@@ -28,11 +31,11 @@ public class SessionDao{
 
     }
 
-   public void save(Task t){
+   public void save(String t){
         Session session=sessionFactory.openSession();
        Transaction tn=session.beginTransaction();
 
-       session.save(t);
+       session.save(new Task(t));
        tn.commit();
        session.close();;
 
